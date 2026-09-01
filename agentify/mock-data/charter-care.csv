@@ -1,0 +1,22 @@
+Charter Communications - Care Tower Process Inventory (extract)
+Exported 18 activities
+
+Category,Category Name,Process Group,Process Group Name,Process,Process Name,PCF ID,Activity Name,Monthly Volume,AHT,Rule Bound %,Contains PII,Safety,Strategic,Applications,Error Rate,Comments
+6.0,Manage Customer Service,6.2,Handle Service Requests,6.2.1,Request Intake,6.2.1.1,Receive a subscriber service request,96000,3,95,Y,N,N,Salesforce API,0.03,
+6.0,Manage Customer Service,6.2,Handle Service Requests,6.2.1,Request Intake,6.2.1.2,Verify subscriber identity and account status,,,90,Y,N,N,Salesforce|Billing API,0.05,
+6.0,Manage Customer Service,6.2,Handle Service Requests,6.2.1,Request Intake,6.2.1.3,Classify the request by service type,94000,3,93,N,N,N,Salesforce API,0.05,
+6.0,Manage Customer Service,6.2,Handle Service Requests,6.2.1,Request Intake,6.2.1.4,Route the request to the correct queue,92000,2,96,N,N,N,Salesforce API,0.02,
+6.0,Manage Customer Service,6.2,Handle Service Requests,6.2.2,Resolution,6.2.2.1,Run automated line diagnostics,62000,5,94,N,N,N,OSS API,0.06,
+6.0,Manage Customer Service,6.2,Handle Service Requests,6.2.2,Resolution,6.2.2.2,Reset customer premises equipment remotely,41000,4,96,N,N,N,OSS API,0.04,
+6.0,Manage Customer Service,6.2,Handle Service Requests,6.2.2,Resolution,6.2.2.3,Diagnose an intermittent node degradation,6200,40,42,N,N,N,OSS|Splunk,0.34,
+6.0,Manage Customer Service,6.2,Handle Service Requests,6.2.2,Resolution,6.2.2.4,Schedule a field technician dispatch,,,86,Y,N,N,Salesforce|Field Service,0.1,
+6.0,Manage Customer Service,6.2,Handle Service Requests,6.2.2,Resolution,6.2.2.5,Handle an escalated complaint from a regulator,320,120,18,Y,N,N,Salesforce,0.46,
+6.0,Manage Customer Service,6.4,Manage Billing Enquiries,6.4.1,Billing Disputes,6.4.1.1,Retrieve the disputed billing record,,,92,Y,N,N,Billing API,0.05,
+6.0,Manage Customer Service,6.4,Manage Billing Enquiries,6.4.1,Billing Disputes,6.4.1.2,Recalculate charges against the rate plan,19000,12,88,Y,N,N,Billing API,0.1,
+6.0,Manage Customer Service,6.4,Manage Billing Enquiries,6.4.1,Billing Disputes,6.4.1.3,Apply an adjustment within the agreed threshold,14000,8,82,Y,N,N,Billing API,0.12,
+6.0,Manage Customer Service,6.4,Manage Billing Enquiries,6.4.1,Billing Disputes,6.4.1.4,Approve a credit above the agent threshold,,,34,Y,N,N,Billing API,0.3,
+6.0,Manage Customer Service,6.4,Manage Billing Enquiries,6.4.1,Billing Disputes,6.4.1.5,Investigate a systemic billing error,180,200,22,N,N,N,Billing API|Splunk,0.44,
+8.0,Manage Information Technology,8.5,Manage IT Operations,8.5.3,Incident Management,8.5.3.1,Detect a network incident from telemetry,4200,5,92,N,N,N,Splunk|OSS,0.08,
+8.0,Manage Information Technology,8.5,Manage IT Operations,8.5.3,Incident Management,8.5.3.2,Correlate alerts into a single incident,3800,10,84,N,N,N,Splunk,0.14,
+8.0,Manage Information Technology,8.5,Manage IT Operations,8.5.3,Incident Management,8.5.3.3,Assign incident severity and notify stakeholders,3600,8,78,N,N,N,ServiceNow,0.12,
+8.0,Manage Information Technology,8.5,Manage IT Operations,8.5.3,Incident Management,8.5.3.4,Coordinate a major incident bridge,120,180,20,N,N,N,Teams|ServiceNow,0.4,

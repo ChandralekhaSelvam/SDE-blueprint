@@ -1,0 +1,28 @@
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    environment:
+      RUN_MODE: ${RUN_MODE:-demo}
+      LLM_PROVIDER: ${LLM_PROVIDER:-mock}
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      GENENGINE_BASE_URL: ${GENENGINE_BASE_URL:-}
+      GENENGINE_API_KEY: ${GENENGINE_API_KEY:-}
+      GCP_PROJECT: ${GCP_PROJECT:-}
+      GCP_LOCATION: ${GCP_LOCATION:-us-central1}
+      BUDGET_USD: ${BUDGET_USD:-2.00}
+      MAX_LLM_CALLS: ${MAX_LLM_CALLS:-60}
+    volumes:
+      - ./mock-data:/srv/mock-data:ro
+      - blueprint-data:/srv/data
+    ports: ["8000:8000"]
+
+  frontend:
+    build:
+      context: ./frontend
+    depends_on: [backend]
+    ports: ["5173:80"]
+
+volumes:
+  blueprint-data:

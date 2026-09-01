@@ -1,0 +1,11 @@
+fastapi==0.115.6
+uvicorn[standard]==0.34.0
+pydantic==2.10.4
+python-multipart==0.0.20
+pandas==2.2.3
+openpyxl==3.1.5
+PyYAML==6.0.2
+httpx==0.28.1
+
+# Only needed when LLM_PROVIDER=vertex. Everything else runs without it.
+google-auth==2.37.0
