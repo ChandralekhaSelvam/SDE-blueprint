@@ -1,0 +1,652 @@
+<title>Forecast Model Arena</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  color-scheme:light;
+  --bg:#F3F5F9; --card:#ffffff; --line:#E1E6EE; --line2:#EEF1F6; --text:#16213B; --muted:#5B6B82; --faint:#8C98AC;
+  --blue:#2F6FEB; --blue-bg:#EEF3FD; --blue-text:#1E4FB8;
+  --good:#1F7A52; --good-bg:#E8F5EE; --warn:#A65A00; --warn-bg:#FBF0DD; --bad:#B42318;
+  --side:#0E1A33; --side-2:#18284A; --side-text:#AEB9CC; --new:#7B4BE0;
+}
+*{box-sizing:border-box}
+body{margin:0;font-family:'IBM Plex Sans',system-ui,sans-serif;color:var(--text);background:#DCE1EA;font-size:14px}
+.mono{font-family:'IBM Plex Mono',ui-monospace,monospace;font-variant-numeric:tabular-nums}
+.eyebrow{font-family:'IBM Plex Mono',ui-monospace,monospace;font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+button{font:inherit;color:inherit}
+button:focus-visible{outline:2px solid var(--blue);outline-offset:2px}
+.mockbar{max-width:1520px;margin:0 auto;padding:14px 16px 10px;display:flex;flex-wrap:wrap;gap:6px 16px;align-items:baseline}
+.mockbar h1{margin:0;font-size:16px}
+.mockbar p{margin:0;font-size:12.5px;color:var(--muted)}
+.app{max-width:1520px;margin:0 auto 24px;display:flex;background:var(--bg);border-radius:12px;overflow:hidden;box-shadow:0 10px 40px rgba(14,26,51,.18)}
+.side{width:214px;flex-shrink:0;background:var(--side);padding:18px 12px;display:flex;flex-direction:column;gap:3px}
+.brand{display:flex;align-items:center;gap:10px;padding:2px 8px 20px;color:#fff}
+.logo{width:34px;height:34px;border-radius:9px;background:var(--blue);display:grid;place-items:center}
+.brand small{display:block;color:#6F7E98;font-size:11px}
+.nav{display:flex;align-items:center;padding:10px 12px;border-radius:8px;font-size:14px;color:var(--side-text)}
+.nav.on{background:var(--side-2);color:#fff}
+.nb{margin-left:auto;font-family:'IBM Plex Mono',monospace;font-size:9px;font-weight:600;padding:2px 6px;border-radius:4px;background:var(--new);color:#fff}
+.content{flex:1;min-width:0;padding:18px 22px 26px;display:flex;flex-direction:column;gap:12px}
+.crumb{font-size:13px;color:var(--faint)} .crumb b{color:var(--text);font-weight:500}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px 18px}
+.row{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+h2{margin:0;font-size:21px;font-weight:700;text-wrap:balance}
+h3{margin:0;font-size:15px;font-weight:600}
+.sub{font-size:13px;color:var(--muted);margin:4px 0 0;max-width:98ch;line-height:1.5}
+
+.fair{background:#0F1B33;color:#E6ECF5;border-radius:12px;padding:11px 16px;display:grid;grid-template-columns:auto repeat(4,minmax(0,1fr));gap:10px 18px;align-items:start}
+.fair .eyebrow{color:#8FB4FF}
+.fi{font-size:12px;line-height:1.45;color:#C4CEDF}
+.fi b{display:block;color:#fff;font-weight:600;font-size:12.5px}
+
+/* ===== ARENA LAYOUT ===== */
+.arenaWrap{display:grid;grid-template-columns:minmax(0,1fr) 320px;gap:14px}
+.stage{position:relative;background:radial-gradient(circle at 30% 20%,#0F1E3D,#0A1730 62%,#08122A);border-radius:14px;overflow:hidden;min-height:560px}
+.stage canvas{display:block;width:100%;height:560px}
+.stageTop{position:absolute;top:0;left:0;right:0;padding:14px 16px;display:flex;justify-content:space-between;align-items:flex-start;pointer-events:none}
+.stageTop *{pointer-events:auto}
+.phase{font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.06em;color:#9FC1FF;background:rgba(15,30,60,.55);border:1px solid rgba(143,180,255,.25);padding:6px 11px;border-radius:20px;backdrop-filter:blur(6px)}
+.phase b{color:#fff;font-weight:600}
+.lensBar{display:flex;gap:5px;background:rgba(15,30,60,.55);border:1px solid rgba(143,180,255,.2);border-radius:20px;padding:4px;backdrop-filter:blur(6px)}
+.lensBtn{border:none;background:transparent;color:#9FB0CE;font-size:11.5px;font-weight:600;padding:6px 12px;border-radius:16px;cursor:pointer;white-space:nowrap}
+.lensBtn.on{background:#2F6FEB;color:#fff}
+.stageBottom{position:absolute;left:0;right:0;bottom:0;padding:12px 16px 14px;display:flex;align-items:center;gap:12px;background:linear-gradient(0deg,rgba(6,12,28,.85),transparent)}
+.playBtn{width:30px;height:30px;border-radius:50%;background:#fff;border:none;display:grid;place-items:center;cursor:pointer;flex-shrink:0}
+.scrub{flex:1;-webkit-appearance:none;height:4px;border-radius:3px;background:rgba(255,255,255,.18);outline:none}
+.scrub::-webkit-slider-thumb{-webkit-appearance:none;width:13px;height:13px;border-radius:50%;background:#fff;box-shadow:0 0 0 3px rgba(47,111,235,.55);cursor:pointer}
+.roundLbl{font-family:'IBM Plex Mono',monospace;font-size:11px;color:#B9C7E0;min-width:78px;text-align:right}
+.axisLbl{position:absolute;font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.06em;color:#5C7099;text-transform:uppercase}
+
+/* right panel */
+.panel{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:0;overflow:hidden;display:flex;flex-direction:column}
+.panelEmpty{padding:22px 18px;color:var(--muted);font-size:13px;line-height:1.6;display:flex;flex-direction:column;gap:10px;align-items:flex-start}
+.panelEmpty .hint{display:flex;gap:8px;align-items:center;font-size:12.5px;background:var(--line2);border-radius:8px;padding:8px 10px;color:var(--text)}
+.pHead{padding:14px 16px 12px;border-bottom:1px solid var(--line)}
+.pName{font-size:16px;font-weight:700;display:flex;align-items:center;gap:8px}
+.dot{width:11px;height:11px;border-radius:50%;flex-shrink:0}
+.pKind{font-size:11.5px;color:var(--muted);margin-top:2px}
+.pBody{padding:12px 16px;display:flex;flex-direction:column;gap:12px;overflow:auto;max-height:480px}
+.statGrid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.st{background:var(--line2);border-radius:8px;padding:8px 10px}
+.st .v{font-family:'IBM Plex Mono',monospace;font-size:16px;font-weight:600}
+.st .l{font-size:10.5px;color:var(--muted);margin-top:1px}
+.rivBox h4{margin:0 0 7px;font-size:11.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);font-weight:600}
+.riv{display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid var(--line2);font-size:12.5px}
+.riv:last-child{border-bottom:none}
+.riv .r-name{display:flex;align-items:center;gap:6px}
+.riv .r-p{font-family:'IBM Plex Mono',monospace;font-size:10.5px;padding:2px 6px;border-radius:5px;font-weight:600}
+.riv .r-p.win{background:var(--good-bg);color:var(--good)}
+.riv .r-p.loss{background:#FCEBEA;color:var(--bad)}
+.riv .r-p.tie{background:var(--line2);color:var(--muted)}
+.famList{display:flex;flex-wrap:wrap;gap:5px}
+.fam{font-family:'IBM Plex Mono',monospace;font-size:10.5px;background:var(--blue-bg);color:var(--blue-text);padding:3px 8px;border-radius:12px}
+.backBtn{font-size:12px;color:var(--blue);cursor:pointer;font-weight:600;display:flex;align-items:center;gap:4px}
+.evidBar{height:7px;border-radius:4px;background:var(--line2);position:relative;overflow:hidden;margin-top:4px}
+.evidBar span{position:absolute;left:0;top:0;bottom:0;border-radius:4px}
+.legend{display:flex;flex-wrap:wrap;gap:10px;padding:10px 16px;border-top:1px solid var(--line);font-size:11px;color:var(--muted)}
+.legend span{display:inline-flex;align-items:center;gap:5px}
+.legend i{width:8px;height:8px;border-radius:50%;display:inline-block}
+
+.pTabs{display:flex;border-bottom:1px solid var(--line);flex-shrink:0}
+.pTab{flex:1;padding:11px 0;text-align:center;font-size:12.5px;font-weight:600;color:var(--muted);cursor:pointer;border-bottom:2px solid transparent}
+.pTab.on{color:var(--text);border-color:var(--blue)}
+.logList{overflow:auto;padding:8px 12px;display:flex;flex-direction:column-reverse;gap:2px;max-height:480px}
+.logRow{display:flex;align-items:center;gap:8px;padding:8px 6px;border-radius:8px;font-size:12px;border-bottom:1px solid var(--line2)}
+.logRow:hover{background:var(--line2);cursor:pointer}
+.logRow .rd{font-family:'IBM Plex Mono',monospace;font-size:9.5px;color:var(--faint);background:var(--line2);border-radius:5px;padding:2px 5px;flex-shrink:0}
+.logRow .txt{flex:1;line-height:1.4}
+.logRow .txt b{font-weight:600}
+.logRow .pv{font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--muted);flex-shrink:0}
+.holdBoard{padding:12px 14px;display:flex;flex-direction:column;gap:8px;overflow:auto;max-height:480px}
+.holdRow{display:flex;align-items:center;gap:8px;font-size:12.5px}
+.holdRow .bar{flex:1;height:9px;background:var(--line2);border-radius:5px;overflow:hidden}
+.holdRow .bar span{display:block;height:100%;border-radius:5px;transition:width .5s}
+.holdRow .n{font-family:'IBM Plex Mono',monospace;font-size:11px;width:56px;text-align:right;color:var(--muted)}
+.holdRow .nm{width:150px;flex-shrink:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+.foot{display:flex;justify-content:space-between;gap:16px;font-size:12px;color:var(--muted)}
+.recBar{display:flex;gap:8px;flex-wrap:wrap}
+.rec{background:var(--blue-bg);color:var(--blue-text);border-radius:8px;padding:6px 11px;font-size:12px;font-weight:600;display:flex;align-items:center;gap:6px}
+</style>
+
+<div class="mockbar">
+  <h1>Forecast Model Arena — mock 3</h1>
+  <p>One continuous simulation instead of tabs. Fifteen methods live as orbs in a shared space; drag the scrubber to replay six rolling-origin rounds, click any orb to interrogate it, switch lenses to re-project the same orbs onto a different question.</p>
+</div>
+
+<div class="app">
+  <div class="side">
+    <div class="brand"><div class="logo"><svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M4 17L10 11L14 15L20 7" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></div><div><b>S&amp;OP Workbench</b><small>Capgemini · demo</small></div></div>
+    <div class="nav">Dashboard</div>
+    <div class="nav">Scenarios</div>
+    <div class="nav">Scenario Workbench</div>
+    <div class="nav">Plan Comparison</div>
+    <div class="nav">Audit Trail</div>
+    <div class="nav on">Model Arena <span class="nb">NEW</span></div>
+    <div class="nav">FinOps &amp; Observability</div>
+    <div class="nav">Settings</div>
+  </div>
+
+  <div class="content">
+    <div class="crumb">Model Arena &nbsp;›&nbsp; <b>Forecast benchmark · demand forecasting · 3,240 series · 15 methods</b></div>
+
+    <div class="card" style="padding-bottom:12px">
+      <div class="row" style="justify-content:space-between">
+        <div>
+          <h2>Model benchmarking, run live — not a static leaderboard</h2>
+          <p class="sub">This is the model-benchmark step of the DoD: 15 forecasting methods scored under identical data, identical hardware and identical rolling-origin evaluation criteria (below). Nothing here is precomputed into a table — you watch the same six backtest rounds the methods actually ran, the battle log records every result the moment it becomes statistically significant, and you can re-project the same population onto whichever question matters: who wins head-to-head, who's biased which direction, who earns their compute, or who actually moves plan margin.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="fair">
+      <div><div class="eyebrow">Held equal</div></div>
+      <div class="fi"><b>Data</b>Same 3,240 series, same 104-wk history, same holdout windows</div>
+      <div class="fi"><b>Hardware</b>Same container class, 8 vCPU / 32GB, no GPU methods favored</div>
+      <div class="fi"><b>Evaluation</b>6 rolling origins, 13-wk horizon, rounds 4–6 scored blind</div>
+      <div class="fi"><b>Significance</b>Diebold-Mariano test on every head-to-head, not just averages</div>
+    </div>
+
+    <div class="arenaWrap">
+      <div class="stage">
+        <canvas id="cv" width="1180" height="560"></canvas>
+        <div class="stageTop">
+          <div class="phase" id="phaseTxt">Round <b id="rNum">1</b> of 6 · <span id="phaseDesc">warming up</span></div>
+          <div class="lensBar" id="lensBar"></div>
+        </div>
+        <div class="axisLbl" id="axL" style="bottom:46px;left:16px"></div>
+        <div class="axisLbl" id="axR" style="bottom:46px;right:16px;text-align:right"></div>
+        <div class="axisLbl" id="axT" style="top:56px;left:16px"></div>
+        <div class="stageBottom">
+          <button class="playBtn" id="playBtn" title="Play/Pause">
+            <svg id="playIcon" width="12" height="14" viewBox="0 0 12 14" fill="#16213B"><path d="M0 0L12 7L0 14V0Z"/></svg>
+          </button>
+          <input type="range" class="scrub" id="scrub" min="0" max="1000" value="0">
+          <div class="roundLbl mono" id="scrubLbl">Round 1 · wk 67</div>
+        </div>
+      </div>
+
+      <div class="panel" id="panel">
+        <div class="pTabs" id="pTabs">
+          <div class="pTab on" data-t="log">Battle log</div>
+          <div class="pTab" data-t="board">Standings</div>
+        </div>
+        <div id="panelLog" class="logList"></div>
+        <div id="panelBoard" class="holdBoard" style="display:none"></div>
+        <div id="panelFull" style="display:none"></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="foot">
+        <div>
+          <b style="color:var(--text)">Reading the arena:</b> orb size = accuracy (bigger = lower WAPE) · orb position = current lens projection · connecting threads = statistically significant head-to-head results (drawn only when p&lt;0.05) · pulsing ring = actively being scored this round.
+        </div>
+        <div class="recBar">
+          <div class="rec">⬤ Champion routing</div>
+          <div class="rec" style="background:var(--good-bg);color:var(--good)">Lead with: Significance lens</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+const cv=document.getElementById('cv'), ctx=cv.getContext('2d');
+const DPR=Math.min(2,window.devicePixelRatio||1);
+const W=1180,H=560;
+function fit(){cv.width=W*DPR;cv.height=H*DPR;cv.style.width=W+'px';cv.style.height=H+'px';ctx.setTransform(DPR,0,0,DPR,0,0);}
+fit();
+
+const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+function rng(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};}
+const R = rng(90210);
+
+// ===== Method population =====
+// w = WAPE %, kind for color, off = per-round WAPE offset (6 rounds), bias pair [near,far] horizon bias %,
+// rt = seconds/run, cost = $/run, families = product families this method wins on
+const PAL = {stat:'#2a78d6', ml:'#eb6834', dl:'#4a3aa7', found:'#e87ba4', route:'#eda100', naive:'#8C98AC'};
+const M = [
+  {id:'naive', name:'Seasonal naive', kind:'naive', w:18.4, off:[1.1,0.4,-0.3,0.8,-0.6,0.2], bias:[3.8,6.1], rt:0.4, cost:0.002, fam:[]},
+  {id:'mavg',  name:'Moving average', kind:'naive', w:17.1, off:[0.8,0.3,-0.4,0.6,-0.5,0.3], bias:[2.9,5.4], rt:0.3, cost:0.001, fam:[]},
+  {id:'ets',   name:'ETS / Holt-Winters', kind:'stat', w:13.9, off:[0.6,-0.2,0.3,-0.4,0.5,-0.3], bias:[1.2,2.4], rt:2.1, cost:0.01, fam:['Healthcare']},
+  {id:'arima', name:'ARIMA / SARIMA', kind:'stat', w:13.5, off:[-0.2,0.3,-0.4,0.3,0.0,-0.3], bias:[0.9,2.0], rt:5.2, cost:0.03, fam:[]},
+  {id:'sarimax',name:'SARIMAX', kind:'stat', w:13.2, off:[-0.3,0.4,-0.5,0.2,0.1,-0.2], bias:[0.6,1.6], rt:6.8, cost:0.04, fam:[]},
+  {id:'tbats', name:'TBATS', kind:'stat', w:14.6, off:[0.9,0.5,-0.6,0.7,-0.4,0.3], bias:[2.1,3.3], rt:9.4, cost:0.06, fam:[]},
+  {id:'prophet',name:'Prophet', kind:'stat', w:15.3, off:[0.7,0.9,-0.4,0.6,-0.7,0.5], bias:[2.6,4.0], rt:3.5, cost:0.02, fam:[]},
+  {id:'theta', name:'Theta method', kind:'stat', w:14.1, off:[0.5,0.2,-0.3,0.4,-0.2,0.1], bias:[1.5,2.7], rt:1.8, cost:0.008, fam:[]},
+  {id:'lgbm',  name:'LightGBM / XGBoost', kind:'ml', w:11.8, off:[-0.4,-0.6,0.5,-0.3,0.2,-0.5], bias:[-0.8,1.9], rt:14.2, cost:0.11, fam:['Retail packs']},
+  {id:'qgbm',  name:'Quantile GBM', kind:'ml', w:12.1, off:[0.2,-0.3,0.4,-0.5,0.3,-0.4], bias:[-1.1,1.4], rt:15.8, cost:0.12, fam:[]},
+  {id:'deepar',name:'DeepAR', kind:'dl', w:11.4, off:[-0.6,-0.4,0.3,-0.7,0.4,-0.6], bias:[-1.9,-0.6], rt:48.3, cost:0.62, fam:['Automation']},
+  {id:'nbeats',name:'N-BEATS', kind:'dl', w:10.9, off:[-0.5,-0.7,0.2,-0.6,0.5,-0.3], bias:[-1.4,0.4], rt:52.1, cost:0.71, fam:['Mobile devices']},
+  {id:'tft',   name:'TFT', kind:'dl', w:11.0, off:[-0.7,-0.5,0.4,-0.5,0.3,-0.4], bias:[-1.6,0.2], rt:61.4, cost:0.83, fam:['Industrial']},
+  {id:'nhits', name:'N-HiTS', kind:'dl', w:10.7, off:[-0.4,-0.6,0.3,-0.5,0.4,-0.5], bias:[-1.2,0.6], rt:44.6, cost:0.58, fam:['Consumer elec.']},
+  {id:'tfm',   name:'TimesFM (zero-shot)', kind:'found', w:11.1, off:[-0.8,-0.3,-0.2,-0.4,0.1,-0.6], bias:[-0.4,2.8], rt:3.9, cost:0.09, fam:[]},
+];
+const ROUTE = {id:'route', name:'Champion routing', kind:'route', w:9.6, off:[-0.9,-0.8,-0.5,-0.7,-0.6,-0.8], bias:[-0.3,0.6], rt:'mixed', cost:0.09, fam:['Healthcare','Retail packs','Automation','Mobile devices','Industrial','Consumer elec.','+4 more']};
+const ALL = M.concat([ROUTE]);
+
+// Head-to-head DM-test results, generated once, symmetric-ish, with p-values
+const H2H = {};
+ALL.forEach(a=>{H2H[a.id]={};});
+for(let i=0;i<ALL.length;i++)for(let j=i+1;j<ALL.length;j++){
+  const a=ALL[i],b=ALL[j];
+  const diff = b.w - a.w; // positive => a better (lower wape)
+  const noise = (R()-0.5)*2.6;
+  const margin = diff + noise;
+  const p = Math.max(0.001, Math.min(0.97, Math.abs(margin) < 0.3 ? 0.3+R()*0.6 : Math.exp(-Math.abs(margin)*1.1)));
+  const sig = p < 0.05;
+  const winner = margin>0 ? a.id : b.id;
+  H2H[a.id][b.id] = {p, sig, win: sig ? winner===a.id : null};
+  H2H[b.id][a.id] = {p, sig, win: sig ? winner===b.id : null};
+}
+
+// ===== Lenses: each returns [x01,y01] in 0..1 space for a method, plus axis labels =====
+const LENS = {
+  overview: {
+    label:'Overview', axL:'← faster / cheaper', axR:'more accurate →', axT:'',
+    xy:(m)=>{ const rt = typeof m.rt==='number'?m.rt:20; const x = 1 - Math.min(1,Math.log(rt+1)/Math.log(56)); const y = 1-(m.w-9)/10; return [0.06+x*0.88,y]; }
+  },
+  significance: {
+    label:'Significance', axL:'← fewer wins', axR:'more head-to-head wins →', axT:'ring = still statistically tied with a rival',
+    xy:(m)=>{ let wins=0,total=0; ALL.forEach(o=>{if(o.id===m.id)return; const r=H2H[m.id][o.id]; if(r.sig){total++; if(r.win)wins++;}}); const x = total? wins/Math.max(total,4) : 0.5; const y = 1-(m.w-9)/10; return [0.15+x*0.75,y]; }
+  },
+  bias: {
+    label:'Bias map', axL:'← under-forecasts near-term', axR:'over-forecasts near-term →', axT:'↑ over-forecasts far-horizon',
+    xy:(m)=>{ const x = 0.5 + m.bias[0]/9; const y = 1-(0.5+m.bias[1]/9); return [Math.max(.04,Math.min(.96,x)), Math.max(.04,Math.min(.96,y))]; }
+  },
+  plan:{
+    label:'Plan impact', axL:'← lower plan margin', axR:'higher plan margin →', axT:'',
+    xy:(m)=>{ const margin = (10.5-m.w)*1.15 + (m.kind==='route'?1.4:0); const x=0.5+margin/9; const y = 1-(m.w-9)/10; return [Math.max(.05,Math.min(.95,x)),y]; }
+  }
+};
+let lensKey='overview';
+
+// ===== Orb state (persistent positions, eased toward lens target) =====
+const orbs = ALL.map((m,i)=>{
+  const [tx,ty] = LENS.overview.xy(m);
+  return {m, x:tx, y:ty, tx, ty, vx:0, vy:0, hover:false, sel:false,
+    ang: R()*Math.PI*2, jr: 2+R()*3, // jitter radius/phase for idle drift
+    jphase: R()*Math.PI*2 };
+});
+let selected=null, hovered=null;
+
+function retarget(){
+  const L = LENS[lensKey];
+  orbs.forEach(o=>{ const [tx,ty]=L.xy(o.m); o.tx=tx; o.ty=ty; });
+}
+
+// ===== Round / scrub state =====
+let round=1; // 1..6
+let playing = !reduced;
+let scrubT = 0; // 0..1000 overall
+
+function wapeAtRound(m, r){ // r 1..6
+  let base = m.w;
+  for(let k=0;k<r;k++) base += m.off[k]*0.35;
+  return base;
+}
+
+function currentWape(m){ return wapeAtRound(m, round); }
+
+// recompute orb radius from live wape each frame (size = accuracy)
+function radiusFor(w){ const rmin=9,rmax=27; const t=Math.max(0,Math.min(1,(19-w)/10)); return rmin+t*(rmax-rmin); }
+
+// ===== Layout mapping 0..1 -> canvas coords with padding =====
+const PAD_L=70, PAD_R=70, PAD_T=76, PAD_B=64;
+function proj(x01,y01){ return [PAD_L + x01*(W-PAD_L-PAD_R), PAD_T + (1-y01)*(H-PAD_T-PAD_B)]; }
+
+// ===== Drawing =====
+function drawBG(t){
+  ctx.clearRect(0,0,W,H);
+  // subtle grid
+  ctx.save();
+  ctx.strokeStyle='rgba(143,180,255,.06)';
+  ctx.lineWidth=1;
+  for(let gx=PAD_L; gx<=W-PAD_R; gx+=(W-PAD_L-PAD_R)/8){
+    ctx.beginPath();ctx.moveTo(gx,PAD_T);ctx.lineTo(gx,H-PAD_B);ctx.stroke();
+  }
+  for(let gy=PAD_T; gy<=H-PAD_B; gy+=(H-PAD_T-PAD_B)/6){
+    ctx.beginPath();ctx.moveTo(PAD_L,gy);ctx.lineTo(W-PAD_R,gy);ctx.stroke();
+  }
+  // center crosshair for bias lens
+  if(lensKey==='bias'){
+    const [cx,cy]=proj(0.5,0.5);
+    ctx.strokeStyle='rgba(255,255,255,.18)';
+    ctx.setLineDash([4,4]);
+    ctx.beginPath();ctx.moveTo(cx,PAD_T);ctx.lineTo(cx,H-PAD_B);ctx.stroke();
+    ctx.beginPath();ctx.moveTo(PAD_L,cy);ctx.lineTo(W-PAD_R,cy);ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillStyle='rgba(255,255,255,.35)';
+    ctx.font='10px IBM Plex Mono';
+    ctx.fillText('unbiased', cx+6, cy-6);
+  }
+  ctx.restore();
+}
+
+function drawThreads(t){
+  if(lensKey!=='significance' && !selected) return;
+  ctx.save();
+  for(let i=0;i<orbs.length;i++)for(let j=i+1;j<orbs.length;j++){
+    const a=orbs[i], b=orbs[j];
+    if(selected && selected.m.id!==a.m.id && selected.m.id!==b.m.id) continue;
+    const r = H2H[a.m.id][b.m.id];
+    if(!r.sig) continue;
+    const ax=a._cx!=null?a._cx:proj(a.x,a.y)[0], ay=a._cy!=null?a._cy:proj(a.x,a.y)[1];
+    const bx=b._cx!=null?b._cx:proj(b.x,b.y)[0], by=b._cy!=null?b._cy:proj(b.x,b.y)[1];
+    const winnerIsA = r.win!==null ? (H2H[a.m.id][b.m.id].win) : null;
+    let col;
+    if(selected){ col = 'rgba(47,111,235,.55)'; ctx.lineWidth=1.6; }
+    else { col='rgba(255,255,255,.10)'; ctx.lineWidth=1; }
+    ctx.strokeStyle=col;
+    ctx.beginPath();ctx.moveTo(ax,ay);ctx.lineTo(bx,by);ctx.stroke();
+  }
+  ctx.restore();
+}
+
+function resolveCollisions(){
+  // work in pixel space so radii are meaningful; nudge overlapping orbs apart, biased back toward target
+  const pts = orbs.map(o=>{ const [px,py]=proj(o.x,o.y); return {o,px,py,r:radiusFor(currentWape(o.m))}; });
+  for(let iter=0; iter<4; iter++){
+    for(let i=0;i<pts.length;i++)for(let j=i+1;j<pts.length;j++){
+      const a=pts[i],b=pts[j];
+      const dx=b.px-a.px, dy=b.py-a.py;
+      let d=Math.hypot(dx,dy);
+      const minD = a.r+b.r+34; // min label-clearing distance
+      if(d<1) d=1;
+      if(d<minD){
+        const push=(minD-d)/2;
+        const ux=dx/d, uy=dy/d;
+        a.px -= ux*push; a.py -= uy*push;
+        b.px += ux*push; b.py += uy*push;
+      }
+    }
+  }
+  pts.forEach(p=>{
+    // clamp to stage bounds
+    p.px = Math.max(PAD_L+p.r, Math.min(W-PAD_R-p.r, p.px));
+    p.py = Math.max(PAD_T+p.r, Math.min(H-PAD_B-p.r, p.py));
+    p.o._cx = p.px; p.o._cy = p.py;
+  });
+}
+
+function drawOrbs(t){
+  orbs.forEach(o=>{
+    const px=o._cx, py=o._cy;
+    const w = currentWape(o.m);
+    const rad = radiusFor(w);
+    const col = PAL[o.m.kind];
+    const dim = selected && selected!==o ? 0.22 : 1;
+    const isRoundActive = true;
+
+    // outer glow
+    ctx.save();
+    ctx.globalAlpha = dim;
+    const g = ctx.createRadialGradient(px,py,0,px,py,rad*2.6);
+    g.addColorStop(0, col+'55'); g.addColorStop(1, col+'00');
+    ctx.fillStyle=g;
+    ctx.beginPath();ctx.arc(px,py,rad*2.6,0,7);ctx.fill();
+
+    // pulsing scoring ring
+    if(!reduced){
+      const pulse = (Math.sin(t*0.004+o.jphase)+1)/2;
+      ctx.strokeStyle = col+'88';
+      ctx.lineWidth=1.4;
+      ctx.beginPath();ctx.arc(px,py, rad+5+pulse*4, 0, 7);ctx.stroke();
+    }
+
+    // hub
+    ctx.fillStyle=col;
+    ctx.beginPath();ctx.arc(px,py,rad,0,7);ctx.fill();
+    if(o.m.kind==='route'){
+      ctx.strokeStyle='#fff'; ctx.lineWidth=2; ctx.setLineDash([3,3]);
+      ctx.beginPath();ctx.arc(px,py,rad+4,0,7);ctx.stroke();ctx.setLineDash([]);
+    }
+    // selection ring
+    if(selected===o){
+      ctx.strokeStyle='#fff'; ctx.lineWidth=2;
+      ctx.beginPath();ctx.arc(px,py,rad+8,0,7);ctx.stroke();
+    }
+    if(hovered===o && selected!==o){
+      ctx.strokeStyle='rgba(255,255,255,.7)'; ctx.lineWidth=1.4;
+      ctx.beginPath();ctx.arc(px,py,rad+6,0,7);ctx.stroke();
+    }
+    ctx.restore();
+
+    // label
+    ctx.save();
+    ctx.globalAlpha = dim;
+    ctx.font = (selected===o?'600 12px':'500 11px')+" 'IBM Plex Sans'";
+    ctx.fillStyle = selected===o? '#fff':'#C7D3EA';
+    ctx.textAlign='center';
+    ctx.fillText(o.m.name, px, py+rad+16);
+    ctx.font="10px 'IBM Plex Mono'";
+    ctx.fillStyle='#6F87B8';
+    ctx.fillText(w.toFixed(1)+'% WAPE', px, py+rad+28);
+    ctx.restore();
+    o._px=px; o._py=py; o._r=rad;
+  });
+}
+
+function loop(t){
+  drawBG(t);
+  orbs.forEach(o=>{
+    const drift = reduced?0: (Math.sin(t*0.0011+o.jphase)*0.006);
+    o.x += (o.tx-o.x)*0.06 + drift*0.2;
+    o.y += (o.ty-o.y)*0.06 + Math.cos(t*0.0013+o.jphase)*0.006*0.2;
+  });
+  resolveCollisions();
+  drawThreads(t);
+  drawOrbs(t);
+  if(!reduced) requestAnimationFrame(loop);
+}
+requestAnimationFrame(loop);
+if(reduced){ setInterval(()=>{loop(performance.now());}, 700); }
+
+// ===== Round autoplay =====
+let lastTick=performance.now();
+let lastPanelRound=0;
+function tick(now){
+  if(playing){
+    scrubT += (now-lastTick)*0.045;
+    if(scrubT>1000){scrubT=0;}
+    updateFromScrub();
+    if(round!==lastPanelRound){ lastPanelRound=round; if(typeof renderPanel==='function') renderPanel(); }
+  }
+  lastTick=now;
+  requestAnimationFrame(tick);
+}
+requestAnimationFrame(tick);
+
+function updateFromScrub(){
+  round = Math.min(6, Math.max(1, Math.floor(scrubT/1000*6)+1));
+  document.getElementById('scrub').value = scrubT;
+  document.getElementById('rNum').textContent = round;
+  const wk = 67 + (round-1)*8;
+  const scored = round>=4;
+  document.getElementById('phaseDesc').textContent = scored? 'scored round (held out)':'training window';
+  document.getElementById('scrubLbl').textContent = 'Round '+round+' · wk '+wk+(scored?' · scored':'');
+  document.getElementById('phaseTxt').style.opacity = 1;
+}
+updateFromScrub();
+
+document.getElementById('scrub').addEventListener('input', e=>{
+  playing=false; updatePlayIcon();
+  scrubT = +e.target.value;
+  updateFromScrub();
+  lastPanelRound=round;
+  if(typeof renderPanel==='function') renderPanel();
+});
+function updatePlayIcon(){
+  document.getElementById('playIcon').innerHTML = playing
+    ? '<rect x="0" y="0" width="4" height="14" fill="#16213B"/><rect x="8" y="0" width="4" height="14" fill="#16213B"/>'
+    : '<path d="M0 0L12 7L0 14V0Z" fill="#16213B"/>';
+}
+document.getElementById('playBtn').addEventListener('click', ()=>{ playing=!playing; updatePlayIcon(); });
+
+// ===== Lens switching =====
+const lensBar = document.getElementById('lensBar');
+Object.keys(LENS).forEach(k=>{
+  const b=document.createElement('button');
+  b.className='lensBtn'+(k===lensKey?' on':'');
+  b.textContent=LENS[k].label;
+  b.dataset.k=k;
+  b.addEventListener('click', ()=>{
+    lensKey=k;
+    [...lensBar.children].forEach(c=>c.classList.toggle('on', c.dataset.k===k));
+    retarget();
+    document.getElementById('axL').textContent=LENS[k].axL;
+    document.getElementById('axR').textContent=LENS[k].axR;
+    document.getElementById('axT').textContent=LENS[k].axT;
+  });
+  lensBar.appendChild(b);
+});
+document.getElementById('axL').textContent=LENS.overview.axL;
+document.getElementById('axR').textContent=LENS.overview.axR;
+document.getElementById('axT').textContent=LENS.overview.axT;
+
+// ===== Pointer interaction =====
+function pick(mx,my){
+  let best=null,bd=1e9;
+  orbs.forEach(o=>{ const dx=mx-o._px, dy=my-o._py; const d=Math.hypot(dx,dy); if(d<Math.max(16,o._r+6) && d<bd){bd=d;best=o;} });
+  return best;
+}
+cv.addEventListener('mousemove', e=>{
+  const rect=cv.getBoundingClientRect();
+  const mx=(e.clientX-rect.left), my=(e.clientY-rect.top);
+  hovered = pick(mx,my);
+  cv.style.cursor = hovered? 'pointer':'default';
+});
+cv.addEventListener('mouseleave', ()=>{hovered=null;});
+cv.addEventListener('click', e=>{
+  const rect=cv.getBoundingClientRect();
+  const mx=(e.clientX-rect.left), my=(e.clientY-rect.top);
+  const p = pick(mx,my);
+  if(p){ selected = (selected===p)? null : p; playing=false; updatePlayIcon(); renderPanel(); }
+  else { selected=null; renderPanel(); }
+});
+
+// ===== Battle log (round-aware): a curated set of marquee match-ups, each revealed the round
+// its Diebold-Mariano result first clears p<0.05 (more rounds = more statistical power, same
+// idea as the "rounds 4-6 scored blind" framing above) =====
+const byIdMap = {}; ALL.forEach(m=>byIdMap[m.id]=m);
+const MARQUEE = [
+  ['route','nhits'], ['route','nbeats'], ['route','tft'], ['route','deepar'], ['route','lgbm'],
+  ['route','tfm'], ['route','ets'], ['route','qgbm'], ['route','sarimax'], ['route','naive'],
+  ['nhits','nbeats'], ['nbeats','tft'], ['nbeats','deepar'], ['tft','deepar'], ['lgbm','qgbm'],
+  ['tfm','nbeats'], ['tfm','nhits'], ['ets','arima'], ['ets','sarimax'], ['ets','tbats'],
+  ['arima','sarimax'], ['deepar','tfm'], ['theta','ets'], ['mavg','naive'], ['nhits','lgbm'],
+  ['prophet','tbats'], ['tft','lgbm']
+];
+function pAtRound(pFinal, r){ return Math.min(0.97, Math.pow(pFinal, Math.sqrt(r/6))); }
+const BATTLES = MARQUEE.map(([aid,bid])=>{
+  const rec = H2H[aid][bid];
+  let revealRound = 6;
+  if(rec.sig){ for(let r=1;r<=6;r++){ if(pAtRound(rec.p,r) < 0.05){ revealRound=r; break; } } }
+  return {a:byIdMap[aid], b:byIdMap[bid], p:rec.p, sig:rec.sig, win:rec.win, revealRound};
+}).sort((x,y)=> x.revealRound-y.revealRound);
+
+let activeTab='log';
+
+function renderLog(){
+  const evs = BATTLES.filter(e=>e.revealRound<=round);
+  const html = evs.map(e=>{
+    const winner = e.sig ? (e.win? e.a : e.b) : null;
+    const loser = e.sig ? (e.win? e.b : e.a) : null;
+    if(!e.sig){
+      return `<div class="logRow" data-id="${e.a.id}"><span class="rd">R${e.revealRound}</span><span class="txt">${e.a.name} vs ${e.b.name} remains a <b>statistical tie</b></span><span class="pv">p=${e.p.toFixed(2)}</span></div>`;
+    }
+    return `<div class="logRow" data-id="${winner.id}"><span class="rd">R${e.revealRound}</span><span class="txt"><b style="color:${PAL[winner.kind]}">${winner.name}</b> confirmed ahead of ${loser.name}</span><span class="pv">p=${e.p.toFixed(3)}</span></div>`;
+  }).join('');
+  document.getElementById('panelLog').innerHTML = html || '<div style="padding:14px;color:var(--muted);font-size:12.5px">No results confirmed yet — advance the round scrubber.</div>';
+  document.querySelectorAll('#panelLog .logRow').forEach(r=>r.addEventListener('click', ()=>{
+    const o = orbs.find(x=>x.m.id===r.dataset.id); if(o){ selected=o; playing=false; updatePlayIcon(); renderPanel(); }
+  }));
+}
+
+function renderBoard(){
+  const rows = ALL.slice().sort((a,b)=>currentWape(a)-currentWape(b));
+  const best=9, worst=19;
+  document.getElementById('panelBoard').innerHTML = rows.map((m,i)=>{
+    const w = currentWape(m);
+    const pct = Math.max(4, Math.min(100, (worst-w)/(worst-best)*100));
+    return `<div class="holdRow"><span class="n mono" style="width:16px">${i+1}</span><span class="nm">${m.name}</span><span class="bar"><span style="width:${pct}%;background:${PAL[m.kind]}"></span></span><span class="n mono">${w.toFixed(1)}%</span></div>`;
+  }).join('');
+}
+
+// ===== Right panel =====
+function famBadges(fam){
+  if(!fam.length) return '<span class="fam" style="background:var(--line2);color:var(--muted)">no clear family win</span>';
+  return fam.map(f=>'<span class="fam">'+f+'</span>').join('');
+}
+function renderPanel(){
+  const tabs=document.getElementById('pTabs'), log=document.getElementById('panelLog'), board=document.getElementById('panelBoard'), full=document.getElementById('panelFull');
+  if(!selected){
+    tabs.style.display='flex'; full.style.display='none';
+    log.style.display = activeTab==='log' ? 'flex':'none';
+    board.style.display = activeTab==='board' ? 'flex':'none';
+    if(activeTab==='log') renderLog(); else renderBoard();
+    return;
+  }
+  tabs.style.display='none'; log.style.display='none'; board.style.display='none'; full.style.display='block';
+  const o=selected, m=o.m, col=PAL[m.kind];
+  const w = currentWape(m);
+
+  // rivals sorted by |margin|
+  const rivals = ALL.filter(x=>x.id!==m.id).map(x=>{
+    const r = H2H[m.id][x.id];
+    return {x, r};
+  }).sort((a,b)=> (b.r.sig - a.r.sig) || (a.r.p-b.r.p));
+
+  let riv = rivals.slice(0,6).map(({x,r})=>{
+    let cls='tie', txt='p='+r.p.toFixed(2)+' · tied';
+    if(r.sig){ cls = r.win? 'win':'loss'; txt = r.win? 'beats · p='+r.p.toFixed(3) : 'loses · p='+r.p.toFixed(3); }
+    return '<div class="riv"><span class="r-name"><span class="dot" style="width:8px;height:8px;background:'+PAL[x.kind]+'"></span>'+x.name+'</span><span class="r-p '+cls+'">'+txt+'</span></div>';
+  }).join('');
+
+  full.innerHTML = `
+    <div class="pHead">
+      <div class="pName"><span class="dot" style="background:${col}"></span>${m.name}</div>
+      <div class="pKind">${m.kind==='route'?'Meta-strategy · routes per product family':m.kind==='naive'?'Baseline / naïve':m.kind==='stat'?'Statistical / classical':m.kind==='ml'?'Gradient-boosted ML':m.kind==='dl'?'Deep learning':'Foundation model, zero-shot'}</div>
+    </div>
+    <div class="pBody">
+      <div class="statGrid">
+        <div class="st"><div class="v mono">${w.toFixed(1)}%</div><div class="l">WAPE (round ${round})</div></div>
+        <div class="st"><div class="v mono">${typeof m.rt==='number'? m.rt.toFixed(1)+'s':'mixed'}</div><div class="l">Runtime / product</div></div>
+        <div class="st"><div class="v mono">${m.bias[0]>=0?'+':''}${m.bias[0].toFixed(1)}%</div><div class="l">Near-horizon bias</div></div>
+        <div class="st"><div class="v mono">${m.bias[1]>=0?'+':''}${m.bias[1].toFixed(1)}%</div><div class="l">Far-horizon bias</div></div>
+      </div>
+      <div class="rivBox">
+        <h4>Head-to-head (Diebold-Mariano)</h4>
+        ${riv}
+      </div>
+      <div class="rivBox">
+        <h4>Wins as product-family champion</h4>
+        <div class="famList">${famBadges(m.fam)}</div>
+      </div>
+      <div class="rivBox">
+        <h4>What this means for the plan</h4>
+        <div style="font-size:12.5px;line-height:1.5;color:var(--muted)">
+          ${m.kind==='route'
+            ? 'Routing beats every single global method with statistical significance in ' + rivals.filter(r=>r.r.sig&&r.r.win).length + ' of ' + rivals.length + ' match-ups — this is the recommended production strategy.'
+            : (w<11.5? "Among the strongest individual methods, but still loses to routing where a rival specializes in a family this method doesn't cover." : 'Solid baseline; mainly useful as a reference point and for families with too little history for ML/DL methods to train on.')}
+        </div>
+      </div>
+    </div>
+    <div class="backBtn" id="pBack" style="padding:10px 16px;border-top:1px solid var(--line)">← Back to battle log</div>
+  `;
+  document.getElementById('pBack').addEventListener('click', ()=>{ selected=null; renderPanel(); });
+}
+document.querySelectorAll('.pTab').forEach(t=>t.addEventListener('click', ()=>{
+  activeTab=t.dataset.t;
+  document.querySelectorAll('.pTab').forEach(x=>x.classList.toggle('on', x===t));
+  renderPanel();
+}));
+renderPanel();
+
+// re-render panel each round tick so wape stays live if a method is selected
+setInterval(()=>{ if(selected) renderPanel(); }, 900);
+})();
+</script>
